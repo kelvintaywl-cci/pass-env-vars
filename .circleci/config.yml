@@ -1,0 +1,39 @@
+version: 2.1
+
+executors:
+  basic:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+
+jobs:
+  create-env-var:
+    executor: basic
+    steps:
+      - run: |
+          echo "export FOO=BAR" >> $BASH_ENV
+      - run: |
+          printenv FOO
+      - run: |
+          cp $BASH_ENV bash.env
+      - persist_to_workspace:
+          root: .
+          paths:
+            - bash.env
+  load-env-var:
+    executor: basic
+    steps:
+      - attach_workspace:
+          at: .
+      - run: |
+          cat bash.env > $BASH_ENV
+      - run: |
+          printenv FOO
+
+workflows:
+  main:
+    jobs:
+      - create-env-var
+      - load-env-var:
+          requires:
+            - create-env-var
